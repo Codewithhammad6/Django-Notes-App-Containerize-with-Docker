@@ -1,0 +1,120 @@
+
+services:
+  nginx:
+    build: 
+       context: ./nginx
+    container_name: "nginx_cont"
+    ports:
+      - "8080:80"
+    restart: always
+    depends_on:
+      - frontend
+      - django_app1
+      - django_app2
+      - django_app3
+    networks:
+      - notes-app-nw
+
+
+  frontend:
+    build: 
+       context: ./mynotes
+    container_name: "frontend_cont"
+    restart: always
+    depends_on:
+      - django_app1
+      - django_app2
+      - django_app3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - notes-app-nw
+
+  django_app1:
+    build:
+      context: ./backend
+    container_name: "django_cont-1"
+    
+    command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - SERVER_NAME=server1
+    depends_on:
+        db:
+          condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/admin || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - notes-app-nw
+  django_app2:
+    build:
+      context: ./backend
+    container_name: "django_cont-2"
+    command: gunicorn notesapp.wsgi --bind 0.0.0.0:5000
+    env_file:
+      - ./backend/.env
+    environment:
+      - SERVER_NAME=server2
+    depends_on:
+        db:
+          condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/admin || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - notes-app-nw
+  django_app3:
+    build:
+      context: ./backend
+    container_name: "django_cont-3"
+    command: gunicorn notesapp.wsgi --bind 0.0.0.0:5000
+    env_file:
+      - ./backend/.env
+    environment:
+      - SERVER_NAME=server3
+    depends_on:
+        db:
+          condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/admin || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - notes-app-nw
+
+  db:
+    image: mysql
+    container_name: "db_cont"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=test_db
+    volumes:
+      - ./data/mysql/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - notes-app-nw
+
+networks:
+  notes-app-nw:
