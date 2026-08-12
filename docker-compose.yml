@@ -1,7 +1,8 @@
 
 services:
   nginx:
-    image: hammadch123/nginx:v2
+    build:
+      context: ./nginx
     container_name: "nginx_cont"
     ports:
       - "8080:80"
@@ -16,7 +17,8 @@ services:
 
 
   frontend:
-    image: hammadch123/notes-frontend-jenkins:latest
+    build:
+      context: ./mynotes
     container_name: "frontend_cont"
     restart: always
     depends_on:
@@ -33,7 +35,8 @@ services:
       - notes-app-nw
 
   django_app1:
-    image: hammadch123/notes-backend-jenkins:latest
+    build:
+      context: ./backend
     container_name: "django_cont-1"
     
     command: sh -c "python manage.py migrate --noinput && gunicorn notesapp.wsgi --bind 0.0.0.0:5000"
