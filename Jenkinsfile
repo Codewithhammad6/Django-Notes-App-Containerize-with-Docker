@@ -50,7 +50,7 @@ pipeline {
 
         stage('Run Application') {
             steps {
-                echo 'Starting application with Docker Compose'
+                echo 'Starting application using Docker Compose'
                 sh 'docker compose up -d'
             }
         }
